@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>5-DOF Robotic Arm & Rover Teleoperation Controller</title>
+  <title>5-DOF Robotic Arm & Rover Teleoperation | 16:9 Cockpit GCS</title>
 
   <!-- Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,11 +11,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="style.css">
+
+  <!-- Three.js & OrbitControls for Realistic 3D Arm View -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body class="cockpit-body">
   <div class="cockpit-container">
     
-    <!-- Top Robotics Header -->
+    <!-- Slim Top Header (Optimized for 16:9) -->
     <header class="cockpit-hud-header glass-panel">
       <div class="hud-brand">
         <div class="robot-status-icon">
@@ -26,8 +30,8 @@
           </svg>
         </div>
         <div class="brand-text">
-          <div class="callsign">ROBOTICS TELEOP GCS</div>
-          <h1 class="main-title">5-DOF ROBOTIC ARM & ROVER CONTROLLER</h1>
+          <div class="callsign">ROBO-WINGS 5-DOF // TELEOP GCS</div>
+          <h1 class="main-title">ROBOTIC ARM & ROVER COCKPIT</h1>
         </div>
       </div>
 
@@ -42,7 +46,7 @@
         <div class="hud-pill" id="badgeArmState">
           <span class="pill-dot connected" id="dotArm"></span>
           <span class="pill-label">ARM:</span>
-          <span class="pill-val" id="textArmState">READY</span>
+          <span class="pill-val" id="textArmState">CALIBRATED</span>
         </div>
 
         <div class="hud-pill" id="badgeLatency">
@@ -58,8 +62,8 @@
 
       <!-- Right Action Controls -->
       <div class="hud-actions">
-        <button id="btnToggleAudio" class="hud-btn" title="Toggle SFX">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon" id="audioIcon">
+        <button id="btnToggleAudio" class="hud-btn" title="Toggle Sound FX">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
             <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
           </svg>
@@ -76,462 +80,359 @@
       </div>
     </header>
 
-    <!-- Main 3-Container Cockpit Grid -->
-    <main class="cockpit-grid">
+    <!-- Main 16:9 Screen Workspace Grid -->
+    <main class="cockpit-16-9-grid">
 
       <!-- ==================================================================== -->
-      <!-- CONTAINER 1: ROBOTIC ARM SIMULATION & CAMERA STREAM                  -->
+      <!-- LEFT COLUMN: VISUAL OBSERVATION (3D SIMULATION + SEPARATE CAMERA)     -->
       <!-- ==================================================================== -->
-      <section class="cockpit-container-card stream-container glass-panel" id="containerStream">
-        <div class="card-hud-header">
-          <div class="hud-tag">CONTAINER 01 // SIMULATION & VISION</div>
-          <h2>Robotic Arm Kinematics & Camera</h2>
-          
-          <!-- View Mode Switcher -->
-          <div class="view-mode-tabs">
-            <button type="button" class="tab-btn active" id="tabSim">🦾 Arm Simulation</button>
-            <button type="button" class="tab-btn" id="tabStream">📹 Live Camera</button>
-          </div>
-        </div>
-
-        <!-- Viewport Area -->
-        <div class="robot-viewport-wrapper">
-          <div class="robot-viewport" id="robotViewport">
-            
-            <!-- Canvas: Interactive Robotic Arm Movement Simulator -->
-            <canvas id="armSimCanvas" class="arm-sim-canvas"></canvas>
-
-            <!-- Video Stream Image Element (Hidden when in Simulation mode) -->
-            <img id="streamImage" class="robot-stream-img" alt="ESP32-CAM Stream" style="display: none;">
-
-            <!-- Simulation Telemetry Overlay -->
-            <div class="sim-telemetry-overlay" id="simTelemetry">
-              <div class="telemetry-pill">
-                <span>EE POS:</span>
-                <strong id="eePosText">X: 185mm | Y: 210mm</strong>
-              </div>
-              <div class="telemetry-pill">
-                <span>CLAW:</span>
-                <strong id="clawStateText">APERTURE: 80°</strong>
-              </div>
-              <div class="telemetry-pill fps-pill">
-                <span id="fpsLabel">FPS:</span>
-                <strong id="simFpsText">60</strong>
-              </div>
-            </div>
-
-            <!-- Viewport Controls (Snapshot & Fullscreen) -->
-            <div class="viewport-quick-actions">
-              <button type="button" id="btnResetView" class="vp-btn" title="Reset Viewport Origin">
+      <div class="col-visuals">
+        
+        <!-- CONTAINER 1: REALISTIC 3D ARM SIMULATION (SEPARATE CONTAINER) -->
+        <section class="cockpit-container-card card-3d-sim glass-panel" id="container3DSim">
+          <div class="card-hud-header">
+            <div class="hud-tag">CONTAINER 01 // 3D KINEMATICS</div>
+            <h2>Realistic 3D Arm Simulation (4-Leg Base Model)</h2>
+            <div class="hud-orbit-hint">Drag: Orbit • Scroll: Zoom</div>
+            <div class="header-tools">
+              <button type="button" id="btnResetView" class="vp-btn-sm" title="Reset Camera View">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
                   <path d="M3 3v5h5"/>
                 </svg>
               </button>
-              <button type="button" id="btnSnapshot" class="vp-btn" title="Capture Snapshot">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                  <circle cx="12" cy="13" r="4"/>
-                </svg>
-              </button>
-              <button type="button" id="btnFullscreen" class="vp-btn" title="Fullscreen">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-                </svg>
-              </button>
             </div>
           </div>
-        </div>
 
-        <!-- Camera Stream Options Panel -->
-        <div class="stream-controls-panel">
-          <div class="stream-input-group">
-            <div class="input-col">
-              <label for="inputCamIp">Camera IP Address</label>
-              <input type="text" id="inputCamIp" value="192.168.1.150" placeholder="192.168.1.150">
+          <div class="sim-3d-viewport-wrapper">
+            <!-- Three.js 3D Viewport -->
+            <div id="threeContainer" class="three-container"></div>
+
+            <!-- Floating 3D Telemetry Overlay -->
+            <div class="sim-3d-overlay">
+              <div class="telemetry-pill">
+                <span>EE TIP:</span>
+                <strong id="eePosText">X: 180 | Y: 210 | Z: 95 mm</strong>
+              </div>
+              <div class="telemetry-pill">
+                <span>JAWS:</span>
+                <strong id="clawStateText">80° APERTURE</strong>
+              </div>
             </div>
+          </div>
+        </section>
 
-            <div class="input-col port-col">
-              <label for="inputCamPort">Port</label>
-              <input type="number" id="inputCamPort" value="81" min="1" max="65535">
-            </div>
+        <!-- CONTAINER 2: LIVE CAMERA STREAM (SEPARATE CONTAINER) -->
+        <section class="cockpit-container-card card-cam-stream glass-panel" id="containerCam">
+          <div class="card-hud-header">
+            <div class="hud-tag">CONTAINER 02 // SENSOR FEED</div>
+            <h2>Live ESP32-CAM Video Stream</h2>
+            <div class="cam-fps-badge" id="camFpsBadge">0.0 FPS</div>
+          </div>
 
-            <div class="input-col path-col">
-              <label for="inputCamPath">Path</label>
-              <input type="text" id="inputCamPath" value="/stream">
-            </div>
-
-            <div class="input-col action-col">
-              <label>&nbsp;</label>
-              <button type="button" class="btn btn-primary" id="btnConnectStream">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
-                  <polygon points="5 3 19 12 5 21 5 3"/>
+          <div class="cam-stream-body">
+            <!-- MJPEG Video Viewport -->
+            <div class="cam-viewport" id="camViewport">
+              <img id="streamImage" class="cam-stream-img" alt="ESP32-CAM MJPEG Stream" style="display: none;">
+              
+              <!-- Offline Placeholder (shown when disconnected) -->
+              <div id="camPlaceholder" class="cam-placeholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="cam-offline-icon">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                  <line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/>
                 </svg>
+                <span>CAMERA OFFLINE &bull; ENTER IP & CONNECT</span>
+              </div>
+
+              <div class="cam-quick-actions">
+                <button type="button" id="btnSnapshot" class="vp-btn-sm" title="Capture Snapshot">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                </button>
+                <button type="button" id="btnFullscreenCam" class="vp-btn-sm" title="Fullscreen Stream">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Stream Connection Bar -->
+            <div class="cam-options-bar">
+              <div class="opt-field ip-field">
+                <label for="inputCamIp">Camera IP</label>
+                <input type="text" id="inputCamIp" value="192.168.1.150" placeholder="192.168.1.150">
+              </div>
+              <div class="opt-field port-field">
+                <label for="inputCamPort">Port</label>
+                <input type="number" id="inputCamPort" value="81">
+              </div>
+              <div class="opt-field path-field">
+                <label for="inputCamPath">Path</label>
+                <input type="text" id="inputCamPath" value="/stream">
+              </div>
+              <button type="button" class="btn btn-primary btn-sm btn-cam-toggle" id="btnConnectStream">
                 Connect Stream
               </button>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+
+      </div>
 
       <!-- ==================================================================== -->
-      <!-- CONTAINER 2: 5-DOF ROBOTIC ARM CONTROLS                              -->
+      <!-- RIGHT COLUMN: CONTROL CONSOLES                                       -->
       <!-- ==================================================================== -->
-      <section class="cockpit-container-card arm-container glass-panel" id="containerArm">
-        <div class="card-hud-header">
-          <div class="hud-tag">CONTAINER 02 // MANIPULATOR</div>
-          <h2>5-DOF Articulated Joint Sliders</h2>
-          <div class="hud-status-badge">5 JOINTS SYNCED</div>
-        </div>
+      <div class="col-controls">
+        
+        <!-- CONTAINER 3: 5-DOF ARM JOINT CONTROLS (WITH SHOW MORE/LESS MINIMIZE) -->
+        <section class="cockpit-container-card card-arm-controls glass-panel" id="containerArmControls">
+          <div class="card-hud-header">
+            <div class="hud-tag">CONTAINER 03 // ARM SLIDERS</div>
+            <h2>5-DOF Manipulator Joints</h2>
+            
+            <!-- Minimize / Show More Toggle Button (Requested) -->
+            <button type="button" class="btn-ghost btn-sm btn-minimize-toggle" id="btnToggleArmMinimize">
+              <span id="minimizeBtnIcon">&minus;</span>
+              <span id="minimizeBtnText">Show Less</span>
+            </button>
+          </div>
 
-        <div class="arm-content-scroll">
-          
-          <!-- Joint Control Sliders Module -->
-          <div class="joints-sliders-cluster">
+          <!-- Compact Summary Bar (Shown when Minimized) -->
+          <div class="arm-minimized-summary hidden" id="armMinimizedSummary">
+            <div class="mini-angle-pill"><span>J1 Base:</span> <strong id="miniBadge_base">90°</strong></div>
+            <div class="mini-angle-pill"><span>J2 Shoulder:</span> <strong id="miniBadge_shoulder">90°</strong></div>
+            <div class="mini-angle-pill"><span>J3 Elbow:</span> <strong id="miniBadge_elbow">90°</strong></div>
+            <div class="mini-angle-pill"><span>J4 Wrist:</span> <strong id="miniBadge_wrist">90°</strong></div>
+            <div class="mini-angle-pill"><span>J5 Claw:</span> <strong id="miniBadge_gripper">80°</strong></div>
+          </div>
+
+          <!-- Collapsible Sliders Body -->
+          <div class="arm-sliders-body" id="armSlidersBody">
             
             <!-- 1. BASE TURRET (YAW) -->
-            <div class="joint-control-card" data-joint="base">
-              <div class="joint-card-top">
-                <div class="joint-meta">
-                  <span class="joint-index">J1</span>
-                  <div class="joint-names">
-                    <span class="joint-title">Base Turret (Yaw)</span>
-                    <span class="joint-range-hint" id="hint_base">Min: 0° &bull; Ideal: 90° &bull; Max: 180°</span>
-                  </div>
-                </div>
-                <div class="joint-angle-badge" id="badge_base">90°</div>
+            <div class="joint-control-row" data-joint="base">
+              <div class="joint-label-group">
+                <span class="joint-tag">J1</span>
+                <span class="joint-name">Base (Yaw)</span>
+                <span class="joint-hint" id="hint_base">0° &ndash; 180°</span>
+                <div class="joint-val-badge" id="badge_base">90°</div>
               </div>
 
               <div class="slider-track-wrap">
                 <input type="range" class="joint-slider" id="slider_base" min="0" max="180" value="90">
-                <div class="slider-ideal-indicator" id="ideal_marker_base" title="Default Ideal Center"></div>
+                <div class="slider-ideal-indicator" id="ideal_marker_base" title="Ideal Default"></div>
               </div>
 
-              <div class="slider-nudge-row">
+              <div class="slider-quick-nudges">
                 <button type="button" class="nudge-btn" data-joint="base" data-delta="-5">-5°</button>
-                <button type="button" class="nudge-btn nudge-center" data-joint="base" data-center="true">Ideal (Center)</button>
+                <button type="button" class="nudge-btn nudge-center" data-joint="base" data-center="true">Ideal</button>
                 <button type="button" class="nudge-btn" data-joint="base" data-delta="5">+5°</button>
               </div>
             </div>
 
             <!-- 2. SHOULDER BOOM (PITCH) -->
-            <div class="joint-control-card" data-joint="shoulder">
-              <div class="joint-card-top">
-                <div class="joint-meta">
-                  <span class="joint-index">J2</span>
-                  <div class="joint-names">
-                    <span class="joint-title">Shoulder Boom (Pitch)</span>
-                    <span class="joint-range-hint" id="hint_shoulder">Min: 15° &bull; Ideal: 90° &bull; Max: 165°</span>
-                  </div>
-                </div>
-                <div class="joint-angle-badge" id="badge_shoulder">90°</div>
+            <div class="joint-control-row" data-joint="shoulder">
+              <div class="joint-label-group">
+                <span class="joint-tag">J2</span>
+                <span class="joint-name">Shoulder (Pitch)</span>
+                <span class="joint-hint" id="hint_shoulder">15° &ndash; 165°</span>
+                <div class="joint-val-badge" id="badge_shoulder">90°</div>
               </div>
 
               <div class="slider-track-wrap">
                 <input type="range" class="joint-slider" id="slider_shoulder" min="15" max="165" value="90">
-                <div class="slider-ideal-indicator" id="ideal_marker_shoulder" title="Default Ideal Center"></div>
+                <div class="slider-ideal-indicator" id="ideal_marker_shoulder" title="Ideal Default"></div>
               </div>
 
-              <div class="slider-nudge-row">
+              <div class="slider-quick-nudges">
                 <button type="button" class="nudge-btn" data-joint="shoulder" data-delta="-5">-5°</button>
-                <button type="button" class="nudge-btn nudge-center" data-joint="shoulder" data-center="true">Ideal (Center)</button>
+                <button type="button" class="nudge-btn nudge-center" data-joint="shoulder" data-center="true">Ideal</button>
                 <button type="button" class="nudge-btn" data-joint="shoulder" data-delta="5">+5°</button>
               </div>
             </div>
 
             <!-- 3. ELBOW ARTICULATION (PITCH) -->
-            <div class="joint-control-card" data-joint="elbow">
-              <div class="joint-card-top">
-                <div class="joint-meta">
-                  <span class="joint-index">J3</span>
-                  <div class="joint-names">
-                    <span class="joint-title">Elbow Articulation (Pitch)</span>
-                    <span class="joint-range-hint" id="hint_elbow">Min: 0° &bull; Ideal: 90° &bull; Max: 180°</span>
-                  </div>
-                </div>
-                <div class="joint-angle-badge" id="badge_elbow">90°</div>
+            <div class="joint-control-row" data-joint="elbow">
+              <div class="joint-label-group">
+                <span class="joint-tag">J3</span>
+                <span class="joint-name">Elbow (Pitch)</span>
+                <span class="joint-hint" id="hint_elbow">0° &ndash; 180°</span>
+                <div class="joint-val-badge" id="badge_elbow">90°</div>
               </div>
 
               <div class="slider-track-wrap">
                 <input type="range" class="joint-slider" id="slider_elbow" min="0" max="180" value="90">
-                <div class="slider-ideal-indicator" id="ideal_marker_elbow" title="Default Ideal Center"></div>
+                <div class="slider-ideal-indicator" id="ideal_marker_elbow" title="Ideal Default"></div>
               </div>
 
-              <div class="slider-nudge-row">
+              <div class="slider-quick-nudges">
                 <button type="button" class="nudge-btn" data-joint="elbow" data-delta="-5">-5°</button>
-                <button type="button" class="nudge-btn nudge-center" data-joint="elbow" data-center="true">Ideal (Center)</button>
+                <button type="button" class="nudge-btn nudge-center" data-joint="elbow" data-center="true">Ideal</button>
                 <button type="button" class="nudge-btn" data-joint="elbow" data-delta="5">+5°</button>
               </div>
             </div>
 
             <!-- 4. WRIST TOOL (PITCH/ROLL) -->
-            <div class="joint-control-card" data-joint="wrist">
-              <div class="joint-card-top">
-                <div class="joint-meta">
-                  <span class="joint-index">J4</span>
-                  <div class="joint-names">
-                    <span class="joint-title">Wrist Tool (Pitch/Roll)</span>
-                    <span class="joint-range-hint" id="hint_wrist">Min: 0° &bull; Ideal: 90° &bull; Max: 180°</span>
-                  </div>
-                </div>
-                <div class="joint-angle-badge" id="badge_wrist">90°</div>
+            <div class="joint-control-row" data-joint="wrist">
+              <div class="joint-label-group">
+                <span class="joint-tag">J4</span>
+                <span class="joint-name">Wrist (Pitch)</span>
+                <span class="joint-hint" id="hint_wrist">0° &ndash; 180°</span>
+                <div class="joint-val-badge" id="badge_wrist">90°</div>
               </div>
 
               <div class="slider-track-wrap">
                 <input type="range" class="joint-slider" id="slider_wrist" min="0" max="180" value="90">
-                <div class="slider-ideal-indicator" id="ideal_marker_wrist" title="Default Ideal Center"></div>
+                <div class="slider-ideal-indicator" id="ideal_marker_wrist" title="Ideal Default"></div>
               </div>
 
-              <div class="slider-nudge-row">
+              <div class="slider-quick-nudges">
                 <button type="button" class="nudge-btn" data-joint="wrist" data-delta="-5">-5°</button>
-                <button type="button" class="nudge-btn nudge-center" data-joint="wrist" data-center="true">Ideal (Center)</button>
+                <button type="button" class="nudge-btn nudge-center" data-joint="wrist" data-center="true">Ideal</button>
                 <button type="button" class="nudge-btn" data-joint="wrist" data-delta="5">+5°</button>
               </div>
             </div>
 
             <!-- 5. GRIPPER CLAW -->
-            <div class="joint-control-card" data-joint="gripper">
-              <div class="joint-card-top">
-                <div class="joint-meta">
-                  <span class="joint-index">J5</span>
-                  <div class="joint-names">
-                    <span class="joint-title">Gripper Claw</span>
-                    <span class="joint-range-hint" id="hint_gripper">Min: 20° &bull; Ideal: 80° &bull; Max: 140°</span>
-                  </div>
-                </div>
-                <div class="joint-angle-badge" id="badge_gripper">80°</div>
+            <div class="joint-control-row" data-joint="gripper">
+              <div class="joint-label-group">
+                <span class="joint-tag">J5</span>
+                <span class="joint-name">Gripper Claw</span>
+                <span class="joint-hint" id="hint_gripper">20° &ndash; 140°</span>
+                <div class="joint-val-badge" id="badge_gripper">80°</div>
               </div>
 
               <div class="slider-track-wrap">
                 <input type="range" class="joint-slider" id="slider_gripper" min="20" max="140" value="80">
-                <div class="slider-ideal-indicator" id="ideal_marker_gripper" title="Default Ideal Center"></div>
+                <div class="slider-ideal-indicator" id="ideal_marker_gripper" title="Ideal Default"></div>
               </div>
 
-              <div class="slider-nudge-row">
+              <div class="slider-quick-nudges">
                 <button type="button" class="nudge-btn" data-joint="gripper" data-delta="-5">-5°</button>
-                <button type="button" class="nudge-btn nudge-center" data-joint="gripper" data-center="true">Ideal (Center)</button>
+                <button type="button" class="nudge-btn nudge-center" data-joint="gripper" data-center="true">Ideal</button>
                 <button type="button" class="nudge-btn" data-joint="gripper" data-delta="5">+5°</button>
               </div>
             </div>
 
           </div>
+        </section>
 
-          <!-- Automated Pose Presets Matrix (Dispatches unique commands) -->
-          <div class="presets-section">
-            <div class="section-label-bar">
-              <span class="label-text">POSE PRESETS (DISPATCHES UNIQUE COMMAND TO ESP)</span>
-            </div>
-
-            <div class="preset-action-grid">
-              <!-- Pick -->
-              <button type="button" class="preset-action-btn" data-preset="pick" data-cmd="pic">
-                <div class="preset-btn-top">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="preset-btn-icon">
-                    <path d="M12 2v14M19 9l-7 7-7-7M5 21h14"/>
-                  </svg>
-                  <span class="preset-name">PICK</span>
-                </div>
-                <div class="preset-cmd-chip">CMD: <code>pic</code></div>
-              </button>
-
-              <!-- Position 1 -->
-              <button type="button" class="preset-action-btn" data-preset="pos1" data-cmd="pos1">
-                <div class="preset-btn-top">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="preset-btn-icon">
-                    <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-                    <polyline points="2 17 12 22 22 17"/>
-                  </svg>
-                  <span class="preset-name">POSITION 1</span>
-                </div>
-                <div class="preset-cmd-chip">CMD: <code>pos1</code></div>
-              </button>
-
-              <!-- Position 2 -->
-              <button type="button" class="preset-action-btn" data-preset="pos2" data-cmd="pos2">
-                <div class="preset-btn-top">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="preset-btn-icon">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polygon points="12 8 8 12 12 16 16 12 12 8"/>
-                  </svg>
-                  <span class="preset-name">POSITION 2</span>
-                </div>
-                <div class="preset-cmd-chip">CMD: <code>pos2</code></div>
-              </button>
-
-              <!-- Position 3 -->
-              <button type="button" class="preset-action-btn" data-preset="pos3" data-cmd="pos3">
-                <div class="preset-btn-top">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="preset-btn-icon">
-                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                  </svg>
-                  <span class="preset-name">POSITION 3</span>
-                </div>
-                <div class="preset-cmd-chip">CMD: <code>pos3</code></div>
-              </button>
-
-              <!-- Drop -->
-              <button type="button" class="preset-action-btn" data-preset="drop" data-cmd="drop">
-                <div class="preset-btn-top">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="preset-btn-icon">
-                    <path d="M12 19V5M5 12l7-7 7 7M5 21h14"/>
-                  </svg>
-                  <span class="preset-name">DROP</span>
-                </div>
-                <div class="preset-cmd-chip">CMD: <code>drop</code></div>
-              </button>
-
-              <!-- Idle State -->
-              <button type="button" class="preset-action-btn" data-preset="idle" data-cmd="idle">
-                <div class="preset-btn-top">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="preset-btn-icon">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="12" y1="6" x2="12" y2="12"/>
-                    <line x1="12" y1="12" x2="16" y2="14"/>
-                  </svg>
-                  <span class="preset-name">IDLE STATE</span>
-                </div>
-                <div class="preset-cmd-chip">CMD: <code>idle</code></div>
-              </button>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      <!-- ==================================================================== -->
-      <!-- CONTAINER 3: ROVER RC VEHICLE CONTROLLER                             -->
-      <!-- ==================================================================== -->
-      <section class="cockpit-container-card rover-container glass-panel" id="containerRover">
-        <div class="card-hud-header">
-          <div class="hud-tag">CONTAINER 03 // VEHICLE DRIVE</div>
-          <h2>Rover RC D-Pad & Controls</h2>
-          <button type="button" class="btn-ghost btn-sm" id="btnOpenKeyModal">⌨️ Key Guide</button>
-        </div>
-
-        <div class="rover-controls-wrap">
+        <!-- ==================================================================== -->
+        <!-- BOTTOM SPLIT ROW: TWO SMALL CONTAINERS SIDE-BY-SIDE (Requested)      -->
+        <!-- 1. Small Container: Arm Presets (Pick, Drop, Pos 1-3, Idle)          -->
+        <!-- 2. Small Container: Car / Rover Navigation (Fwd, Rev, Left, Right, Stop)-->
+        <!-- ==================================================================== -->
+        <div class="bottom-split-row">
           
-          <!-- D-Pad Directional Cluster -->
-          <div class="rc-dpad-module">
-            <div class="dpad-grid">
-              
-              <!-- Spin Left -->
-              <button type="button" class="dpad-btn btn-spin-l" id="btnRoverSpinL" data-cmd="ROVER_SPIN_L" title="Spin Left (Q)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="1 4 1 10 7 10"/>
-                  <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
-                </svg>
-                <span class="key-hint">Q</span>
-              </button>
-
-              <!-- Forward -->
-              <button type="button" class="dpad-btn btn-forward" id="btnRoverFwd" data-cmd="ROVER_FWD" title="Forward (W / Up)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M12 19V5M5 12l7-7 7 7"/>
-                </svg>
-                <span class="key-hint">W</span>
-              </button>
-
-              <!-- Spin Right -->
-              <button type="button" class="dpad-btn btn-spin-r" id="btnRoverSpinR" data-cmd="ROVER_SPIN_R" title="Spin Right (E)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="23 4 23 10 17 10"/>
-                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-                </svg>
-                <span class="key-hint">E</span>
-              </button>
-
-              <!-- Steer Left -->
-              <button type="button" class="dpad-btn btn-left" id="btnRoverLeft" data-cmd="ROVER_LEFT" title="Steer Left (A / Left)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M19 12H5M12 19l-7-7 7-7"/>
-                </svg>
-                <span class="key-hint">A</span>
-              </button>
-
-              <!-- Center STOP (E-Brake) -->
-              <button type="button" class="dpad-btn btn-stop" id="btnRoverStop" data-cmd="ROVER_STOP" title="Brake (SPACE)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <rect x="6" y="6" width="12" height="12" rx="2"/>
-                </svg>
-                <span class="stop-label">BRAKE</span>
-              </button>
-
-              <!-- Steer Right -->
-              <button type="button" class="dpad-btn btn-right" id="btnRoverRight" data-cmd="ROVER_RIGHT" title="Steer Right (D / Right)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-                <span class="key-hint">D</span>
-              </button>
-
-              <!-- Empty spacer -->
-              <div class="dpad-spacer"></div>
-
-              <!-- Reverse -->
-              <button type="button" class="dpad-btn btn-reverse" id="btnRoverRev" data-cmd="ROVER_REV" title="Reverse (S / Down)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M12 5v14M5 12l7 7 7-7"/>
-                </svg>
-                <span class="key-hint">S</span>
-              </button>
-
-              <!-- Empty spacer -->
-              <div class="dpad-spacer"></div>
-
-            </div>
-          </div>
-
-          <!-- Speed Throttle & Auxiliaries -->
-          <div class="rc-aux-systems">
-            
-            <!-- Speed Selector -->
-            <div class="speed-selector-group">
-              <span class="group-title">TRANSMISSION THROTTLE</span>
-              <div class="speed-pills">
-                <button type="button" class="speed-pill" data-speed="30">LOW 30%</button>
-                <button type="button" class="speed-pill active" data-speed="70">CRUISE 70%</button>
-                <button type="button" class="speed-pill" data-speed="100">TURBO 100%</button>
-              </div>
+          <!-- SMALL CONTAINER 1: ARM PRESET MACROS -->
+          <section class="cockpit-container-card small-card card-presets glass-panel">
+            <div class="card-hud-header compact-header">
+              <div class="hud-tag">ARM ACTIONS</div>
+              <h3>Pose Presets</h3>
             </div>
 
-            <!-- Aux Switches -->
-            <div class="aux-switches-group">
-              <span class="group-title">PAYLOAD & LIGHTS</span>
-              <div class="aux-buttons-grid">
-                <button type="button" class="aux-btn" id="btnRoverLights" data-cmd="ROVER_LIGHTS">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="5"/>
-                    <line x1="12" y1="1" x2="12" y2="3"/>
-                    <line x1="12" y1="21" x2="12" y2="23"/>
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-                    <line x1="1" y1="12" x2="3" y2="12"/>
-                    <line x1="21" y1="12" x2="23" y2="12"/>
+            <div class="presets-compact-grid">
+              <button type="button" class="preset-pill-btn" data-preset="pick" data-cmd="pic">
+                <span class="p-name">PICK</span>
+                <code class="p-cmd">pic</code>
+              </button>
+
+              <button type="button" class="preset-pill-btn" data-preset="drop" data-cmd="drop">
+                <span class="p-name">DROP</span>
+                <code class="p-cmd">drop</code>
+              </button>
+
+              <button type="button" class="preset-pill-btn" data-preset="pos1" data-cmd="pos1">
+                <span class="p-name">POS 1</span>
+                <code class="p-cmd">pos1</code>
+              </button>
+
+              <button type="button" class="preset-pill-btn" data-preset="pos2" data-cmd="pos2">
+                <span class="p-name">POS 2</span>
+                <code class="p-cmd">pos2</code>
+              </button>
+
+              <button type="button" class="preset-pill-btn" data-preset="pos3" data-cmd="pos3">
+                <span class="p-name">POS 3</span>
+                <code class="p-cmd">pos3</code>
+              </button>
+
+              <button type="button" class="preset-pill-btn" data-preset="idle" data-cmd="idle">
+                <span class="p-name">IDLE</span>
+                <code class="p-cmd">idle</code>
+              </button>
+            </div>
+          </section>
+
+          <!-- SMALL CONTAINER 2: CAR / ROVER CONTROLS (FORWARD, BACKWARD, LEFT, RIGHT, STOP) -->
+          <section class="cockpit-container-card small-card card-car-drive glass-panel">
+            <div class="card-hud-header compact-header">
+              <div class="hud-tag">CAR DRIVE</div>
+              <h3>Rover RC Navigation</h3>
+              <button type="button" class="key-guide-link" id="btnOpenKeyModal">⌨️ Keys</button>
+            </div>
+
+            <div class="car-dpad-compact">
+              <div class="dpad-cross-grid">
+                <!-- Row 1: Forward -->
+                <div class="dpad-spacer"></div>
+                <button type="button" class="car-btn btn-fwd" id="btnRoverFwd" data-cmd="ROVER_FWD" title="Move Forward (W)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M12 19V5M5 12l7-7 7 7"/>
                   </svg>
-                  <span>HEADLIGHTS</span>
+                  <span>FWD</span>
+                </button>
+                <div class="dpad-spacer"></div>
+
+                <!-- Row 2: Left, STOP, Right -->
+                <button type="button" class="car-btn btn-left" id="btnRoverLeft" data-cmd="ROVER_LEFT" title="Steer Left (A)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                  </svg>
+                  <span>LEFT</span>
                 </button>
 
-                <button type="button" class="aux-btn" id="btnRoverHorn" data-cmd="ROVER_HORN">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                <button type="button" class="car-btn btn-stop" id="btnRoverStop" data-cmd="ROVER_STOP" title="Stop / Brake (SPACE)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <rect x="6" y="6" width="12" height="12" rx="2"/>
                   </svg>
-                  <span>HORN / SIREN</span>
+                  <span>STOP</span>
                 </button>
+
+                <button type="button" class="car-btn btn-right" id="btnRoverRight" data-cmd="ROVER_RIGHT" title="Steer Right (D)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
+                  <span>RIGHT</span>
+                </button>
+
+                <!-- Row 3: Backward -->
+                <div class="dpad-spacer"></div>
+                <button type="button" class="car-btn btn-rev" id="btnRoverRev" data-cmd="ROVER_REV" title="Move Backward (S)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M12 5v14M5 12l7 7 7-7"/>
+                  </svg>
+                  <span>REV</span>
+                </button>
+                <div class="dpad-spacer"></div>
               </div>
             </div>
-
-          </div>
+          </section>
 
         </div>
-      </section>
+
+      </div>
 
     </main>
 
     <!-- Bottom Telemetry Terminal Strip -->
     <footer class="cockpit-footer-terminal glass-panel">
       <div class="footer-telemetry-item">
-        <span class="telemetry-lbl">LAST COMMAND:</span>
+        <span class="telemetry-lbl">LAST CMD:</span>
         <code id="feedbackCmd" class="telemetry-data font-code">IDLE &mdash; READY</code>
       </div>
 
@@ -546,7 +447,7 @@
       </div>
 
       <div class="footer-telemetry-item">
-        <span class="telemetry-lbl">UPTIME:</span>
+        <span class="telemetry-lbl">MISSION UPTIME:</span>
         <span id="feedbackUptime" class="telemetry-data">00:00:00</span>
       </div>
 
@@ -562,11 +463,11 @@
         <button type="button" id="btnClearLog" class="btn-ghost btn-sm">Clear</button>
       </div>
       <div class="terminal-log-content" id="terminalLog">
-        <div class="log-entry system">[SYSTEM] Controller initialized. 5-DOF Kinematics ready.</div>
+        <div class="log-entry system">[SYSTEM] Controller initialized. 3D Model calibrated.</div>
       </div>
     </div>
 
-    <!-- Keyboard Shortcuts Modal Dialog (Requested popup) -->
+    <!-- Keyboard Shortcuts Modal Dialog (Popup) -->
     <div class="modal-backdrop hidden" id="keyboardModal">
       <div class="modal-card glass-panel">
         <div class="modal-header">
@@ -575,22 +476,22 @@
               <rect x="2" y="4" width="20" height="16" rx="2"/>
               <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 16h8"/>
             </svg>
-            <h3>Keyboard Teleoperation Controls</h3>
+            <h3>Rover Keyboard Navigation</h3>
           </div>
           <button type="button" class="btn-close-modal" id="btnCloseKeyModal" title="Close">&times;</button>
         </div>
         
         <div class="modal-body">
-          <p class="modal-desc">Drive the rover using standard gaming keyboard controls:</p>
+          <p class="modal-desc">Navigate the vehicle using standard keyboard controls:</p>
           
           <div class="key-shortcut-grid">
             <div class="key-item">
               <span class="kbd-wrap"><kbd>W</kbd> <span class="or">/</span> <kbd>&uarr;</kbd></span>
-              <span class="key-action">Drive Forward</span>
+              <span class="key-action">Move Forward</span>
             </div>
             <div class="key-item">
               <span class="kbd-wrap"><kbd>S</kbd> <span class="or">/</span> <kbd>&darr;</kbd></span>
-              <span class="key-action">Drive Reverse</span>
+              <span class="key-action">Move Backward</span>
             </div>
             <div class="key-item">
               <span class="kbd-wrap"><kbd>A</kbd> <span class="or">/</span> <kbd>&larr;</kbd></span>
@@ -600,27 +501,10 @@
               <span class="kbd-wrap"><kbd>D</kbd> <span class="or">/</span> <kbd>&rarr;</kbd></span>
               <span class="key-action">Steer Right</span>
             </div>
-            <div class="key-item">
-              <span class="kbd-wrap"><kbd>Q</kbd></span>
-              <span class="key-action">Pivot Spin Left</span>
-            </div>
-            <div class="key-item">
-              <span class="kbd-wrap"><kbd>E</kbd></span>
-              <span class="key-action">Pivot Spin Right</span>
-            </div>
             <div class="key-item full-width">
               <span class="kbd-wrap"><kbd class="space-kbd">SPACEBAR</kbd></span>
-              <span class="key-action">Emergency Brake / Stop</span>
+              <span class="key-action">STOP / Emergency Brake</span>
             </div>
-          </div>
-
-          <div class="modal-tip">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="tip-icon">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="16" x2="12" y2="12"/>
-              <line x1="12" y1="8" x2="12.01" y2="8"/>
-            </svg>
-            <span>Auto-brake is active: Rover halts immediately when keys are released.</span>
           </div>
         </div>
 
