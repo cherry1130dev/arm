@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings & Hardware Calibration | IoT Teleop GCS</title>
+
+  <!-- Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="settings-body">
+  <div class="settings-layout">
+    
+    <!-- Top Bar Navigation -->
+    <header class="settings-header glass-panel">
+      <div class="header-left">
+        <a href="index.html" class="btn btn-secondary back-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Back to Cockpit (Live Teleop)
+        </a>
+        <div class="settings-title-group">
+          <div class="badge-tag">GCS CONFIGURATION</div>
+          <h1 class="page-title">Hardware Calibration & System Settings</h1>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <button id="btnTopSave" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+            <polyline points="17 21 17 13 7 13 7 21"/>
+            <polyline points="7 3 7 8 15 8"/>
+          </svg>
+          Save All Settings
+        </button>
+      </div>
+    </header>
+
+    <div id="toastMessage" class="toast-notification hidden"></div>
+
+    <main class="settings-content-grid">
+      
+      <!-- Section 1: Firebase Cloud Connection -->
+      <section class="card glass-panel settings-card">
+        <div class="card-header">
+          <div class="card-title-wrap">
+            <svg class="icon-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
+              <path d="M12 12v9m-4-4 4 4 4-4"/>
+            </svg>
+            <div>
+              <h2>Firebase Realtime Database Credentials</h2>
+              <p class="section-desc">Connects the web dashboard to your ESP32 controller and cloud command queue.</p>
+            </div>
+          </div>
+          <div class="header-pills">
+            <button type="button" id="btnFillDemoFirebase" class="btn-ghost btn-sm">Load Demo Placeholders</button>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-group span-2">
+              <label for="fbDbUrl">Database URL <span class="required">*</span></label>
+              <input type="url" id="fbDbUrl" placeholder="https://your-project-default-rtdb.firebaseio.com" spellcheck="false" required>
+              <span class="input-hint">Must end with .firebaseio.com or .firebasedatabase.app</span>
+            </div>
+
+            <div class="form-group">
+              <label for="fbApiKey">Web API Key <span class="required">*</span></label>
+              <input type="password" id="fbApiKey" placeholder="AIzaSy..." spellcheck="false" autocomplete="off" required>
+              <span class="input-hint">Found under Firebase Project Settings &rarr; Web API Key</span>
+            </div>
+
+            <div class="form-group">
+              <label for="fbProjectId">Project ID <span class="required">*</span></label>
+              <input type="text" id="fbProjectId" placeholder="my-iot-rover" spellcheck="false" required>
+            </div>
+
+            <div class="form-group">
+              <label for="fbAuthDomain">Auth Domain (Optional)</label>
+              <input type="text" id="fbAuthDomain" placeholder="my-iot-rover.firebaseapp.com" spellcheck="false">
+            </div>
+
+            <div class="form-group">
+              <label for="fbRootPath">Database Root Path</label>
+              <input type="text" id="fbRootPath" value="/test_bench" spellcheck="false">
+              <span class="input-hint">Default: /test_bench (matches firmware listener)</span>
+            </div>
+          </div>
+
+          <div class="connection-test-bar">
+            <button type="button" id="btnTestFirebase" class="btn btn-secondary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+              </svg>
+              Test Connection
+            </button>
+            <div id="fbTestStatus" class="test-status-pill status-neutral">
+              <span class="pill-dot"></span>
+              <span class="pill-text">Not Tested</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 2: 5-DOF Arm Joint Calibration & Ideal Angles -->
+      <section class="card glass-panel settings-card">
+        <div class="card-header">
+          <div class="card-title-wrap">
+            <svg class="icon-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            <div>
+              <h2>5-DOF Robotic Arm Calibration</h2>
+              <p class="section-desc">Define mechanical travel limits (Min/Max Angle) and default Ideal (Center) Angle for each joint.</p>
+            </div>
+          </div>
+          <button type="button" id="btnResetJointsDefault" class="btn-ghost btn-sm">Reset Arm to Defaults</button>
+        </div>
+
+        <div class="card-body">
+          <div class="joint-calibration-table">
+            <div class="table-header-row">
+              <span class="col-joint">Joint Name</span>
+              <span class="col-num">Min Angle (°)</span>
+              <span class="col-num">Ideal / Default (°)</span>
+              <span class="col-num">Max Angle (°)</span>
+              <span class="col-preview">Range & Center Preview</span>
+            </div>
+
+            <!-- Joint: Base -->
+            <div class="joint-row" data-joint="base">
+              <div class="col-joint">
+                <span class="joint-tag">J1</span>
+                <strong>Base Turret (Yaw)</strong>
+                <span class="joint-sub">Rotates arm base horizontally</span>
+              </div>
+              <div class="col-num">
+                <input type="number" class="joint-input joint-min" id="joint_base_min" min="0" max="180" value="0">
+              </div>
+              <div class="col-num">
+                <input type="number" class="joint-input joint-ideal" id="joint_base_ideal" min="0" max="180" value="90">
+              </div>
+              <div class="col-num">
+                <input type="number" class="joint-input joint-max" id="joint_base_max" min="0" max="180" value="180">
+              </div>
+              <div class="col-preview">
+                <div class="range-meter" id="meter_base">
+                  <div class="meter-bar"></div>
+                  <div class="meter-ideal-marker" title="Ideal Default"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Joint: Shoulder -->
+            <div class="joint-row" data-joint="shoulder">
+              <div class="col-joint">
+                <span class="joint-tag">J2</span>
+                <strong>Shoulder Boom (Pitch)</strong>
+                <span class="joint-sub">Main vertical lift elevation</span>
+              </div>
+              <div class="col-num">
+                <input type="number" class="joint-input joint-min" id="joint_shoulder_min" min="0" max="180" value="15">
+              </div>
+              <div class="col-num">
+                <input type="number" class="joint-input joint-ideal" id="joint_shoulder_ideal" min="0" max="180" value="90">
+              </div>
+              <div class="col-num">
+                <input type="number" class="joint-input joint-max" id="joint_shoulder_max" min="0" max="180" value="165">
+              </div>
+              <div class="col-preview">
+                <div class="range-meter" id="meter_shoulder">
+                  <div class="meter-bar"></div>
+                  <div class="meter-ideal-marker" title="Ideal Default"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Joint: Elbow -->
+            <div class="joint-row" data-joint="elbow">
+              <div class="col-joint">
+                <span class="joint-tag">J3</span>
+                <strong>Elbow Articulation (Pitch)</strong>
+                <span class="joint-sub">Forearm reach and flex</span>
+              </div>
+              <div class="col-num">
+                <input type="number" class="joint-input joint-min" id="joint_elbow_min" min="0" max="180" value="0">
+              </div>
+              <div class="col-num">
+                <input type="number" class="joint-input joint-ideal" id="joint_elbow_ideal" min="0" max="180" value="90">
+              </div>
+              <div class="col-num">
+                <input type="number" class="joint-input joint-max" id="joint_elbow_max" min="0" max="180" value="180">
+              </div>
+              <div class="col-preview">
+                <div class="range-meter" id="meter_elbow">
+                  <div class="meter-bar"></div>
+                  <div class="meter-ideal-marker" title="Ideal Default"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Joint: Wrist -->
+            <div class="joint-row" data-joint="wrist">
+              <div class="col-joint">
+                <span class="joint-tag">J4</span>
+                <strong>Wrist Tool (Pitch/Roll)</strong>
+                <span class="joint-sub">Claw pitch angle & orientation</span>
+              </div>
+              <div class="col-num">
+                <input type="number" class="joint-input joint-min" id="joint_wrist_min" min="0" max="180" value="0">
+              </div>
+              <div class="col-num">
+                <input type="number" class="joint-input joint-ideal" id="joint_wrist_ideal" min="0" max="180" value="90">
+              </div>
+              <div class="col-num">
+                <input type="number" class="joint-input joint-max" id="joint_wrist_max" min="0" max="180" value="180">
+              </div>
+              <div class="col-preview">
+                <div class="range-meter" id="meter_wrist">
+                  <div class="meter-bar"></div>
+                  <div class="meter-ideal-marker" title="Ideal Default"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Joint: Gripper -->
+            <div class="joint-row" data-joint="gripper">
+              <div class="col-joint">
+                <span class="joint-tag">J5</span>
+                <strong>Gripper Claw</strong>
+                <span class="joint-sub">Claw clamp (Closed &harr; Open)</span>
+              </div>
+              <div class="col-num">
+                <input type="number" class="joint-input joint-min" id="joint_gripper_min" min="0" max="180" value="20">
+              </div>
+              <div class="col-num">
+                <input type="number" class="joint-input joint-ideal" id="joint_gripper_ideal" min="0" max="180" value="80">
+              </div>
+              <div class="col-num">
+                <input type="number" class="joint-input joint-max" id="joint_gripper_max" min="0" max="180" value="140">
+              </div>
+              <div class="col-preview">
+                <div class="range-meter" id="meter_gripper">
+                  <div class="meter-bar"></div>
+                  <div class="meter-ideal-marker" title="Ideal Default"></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3: Pose Presets & Commands Mapping -->
+      <section class="card glass-panel settings-card">
+        <div class="card-header">
+          <div class="card-title-wrap">
+            <svg class="icon-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            <div>
+              <h2>Arm Pose Presets & Command Dispatch</h2>
+              <p class="section-desc">Each preset button dispatches a unique string command to the microcontroller and aligns the joint angles.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="presets-matrix-grid">
+            
+            <!-- Preset: Pick -->
+            <div class="preset-config-card" data-preset="pick">
+              <div class="preset-card-head">
+                <span class="preset-badge">PICK</span>
+                <span class="command-tag">Sends: <code>pic</code></span>
+              </div>
+              <p class="preset-card-desc">Grasp target object at ground level</p>
+              <div class="preset-angles-mini">
+                <label>Base: <input type="number" id="preset_pick_base" value="90" min="0" max="180"></label>
+                <label>Shoulder: <input type="number" id="preset_pick_shoulder" value="45" min="0" max="180"></label>
+                <label>Elbow: <input type="number" id="preset_pick_elbow" value="135" min="0" max="180"></label>
+                <label>Wrist: <input type="number" id="preset_pick_wrist" value="60" min="0" max="180"></label>
+                <label>Gripper: <input type="number" id="preset_pick_gripper" value="130" min="0" max="180"></label>
+              </div>
+            </div>
+
+            <!-- Preset: Pos 1 -->
+            <div class="preset-config-card" data-preset="pos1">
+              <div class="preset-card-head">
+                <span class="preset-badge">POSITION 1</span>
+                <span class="command-tag">Sends: <code>pos1</code></span>
+              </div>
+              <p class="preset-card-desc">Waypoint 1: Left quadrant sweep</p>
+              <div class="preset-angles-mini">
+                <label>Base: <input type="number" id="preset_pos1_base" value="45" min="0" max="180"></label>
+                <label>Shoulder: <input type="number" id="preset_pos1_shoulder" value="70" min="0" max="180"></label>
+                <label>Elbow: <input type="number" id="preset_pos1_elbow" value="90" min="0" max="180"></label>
+                <label>Wrist: <input type="number" id="preset_pos1_wrist" value="90" min="0" max="180"></label>
+                <label>Gripper: <input type="number" id="preset_pos1_gripper" value="80" min="0" max="180"></label>
+              </div>
+            </div>
+
+            <!-- Preset: Pos 2 -->
+            <div class="preset-config-card" data-preset="pos2">
+              <div class="preset-card-head">
+                <span class="preset-badge">POSITION 2</span>
+                <span class="command-tag">Sends: <code>pos2</code></span>
+              </div>
+              <p class="preset-card-desc">Waypoint 2: High observation pose</p>
+              <div class="preset-angles-mini">
+                <label>Base: <input type="number" id="preset_pos2_base" value="90" min="0" max="180"></label>
+                <label>Shoulder: <input type="number" id="preset_pos2_shoulder" value="110" min="0" max="180"></label>
+                <label>Elbow: <input type="number" id="preset_pos2_elbow" value="75" min="0" max="180"></label>
+                <label>Wrist: <input type="number" id="preset_pos2_wrist" value="100" min="0" max="180"></label>
+                <label>Gripper: <input type="number" id="preset_pos2_gripper" value="80" min="0" max="180"></label>
+              </div>
+            </div>
+
+            <!-- Preset: Pos 3 -->
+            <div class="preset-config-card" data-preset="pos3">
+              <div class="preset-card-head">
+                <span class="preset-badge">POSITION 3</span>
+                <span class="command-tag">Sends: <code>pos3</code></span>
+              </div>
+              <p class="preset-card-desc">Waypoint 3: Right delivery quadrant</p>
+              <div class="preset-angles-mini">
+                <label>Base: <input type="number" id="preset_pos3_base" value="135" min="0" max="180"></label>
+                <label>Shoulder: <input type="number" id="preset_pos3_shoulder" value="70" min="0" max="180"></label>
+                <label>Elbow: <input type="number" id="preset_pos3_elbow" value="90" min="0" max="180"></label>
+                <label>Wrist: <input type="number" id="preset_pos3_wrist" value="90" min="0" max="180"></label>
+                <label>Gripper: <input type="number" id="preset_pos3_gripper" value="80" min="0" max="180"></label>
+              </div>
+            </div>
+
+            <!-- Preset: Drop -->
+            <div class="preset-config-card" data-preset="drop">
+              <div class="preset-card-head">
+                <span class="preset-badge">DROP</span>
+                <span class="command-tag">Sends: <code>drop</code></span>
+              </div>
+              <p class="preset-card-desc">Release payload at container area</p>
+              <div class="preset-angles-mini">
+                <label>Base: <input type="number" id="preset_drop_base" value="140" min="0" max="180"></label>
+                <label>Shoulder: <input type="number" id="preset_drop_shoulder" value="60" min="0" max="180"></label>
+                <label>Elbow: <input type="number" id="preset_drop_elbow" value="110" min="0" max="180"></label>
+                <label>Wrist: <input type="number" id="preset_drop_wrist" value="70" min="0" max="180"></label>
+                <label>Gripper: <input type="number" id="preset_drop_gripper" value="30" min="0" max="180"></label>
+              </div>
+            </div>
+
+            <!-- Preset: Idle -->
+            <div class="preset-config-card" data-preset="idle">
+              <div class="preset-card-head">
+                <span class="preset-badge">IDLE STATE</span>
+                <span class="command-tag">Sends: <code>idle</code></span>
+              </div>
+              <p class="preset-card-desc">Stow arm into balanced travel posture</p>
+              <div class="preset-angles-mini">
+                <label>Base: <input type="number" id="preset_idle_base" value="90" min="0" max="180"></label>
+                <label>Shoulder: <input type="number" id="preset_idle_shoulder" value="90" min="0" max="180"></label>
+                <label>Elbow: <input type="number" id="preset_idle_elbow" value="90" min="0" max="180"></label>
+                <label>Wrist: <input type="number" id="preset_idle_wrist" value="90" min="0" max="180"></label>
+                <label>Gripper: <input type="number" id="preset_idle_gripper" value="80" min="0" max="180"></label>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 4: ESP32-CAM Stream & Rover Vehicle Options -->
+      <section class="card glass-panel settings-card span-2">
+        <div class="card-header">
+          <div class="card-title-wrap">
+            <svg class="icon-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+            <div>
+              <h2>Camera Stream & Rover Vehicle Tuning</h2>
+              <p class="section-desc">Default IP addresses and drone/rover motion dynamics.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="camIp">Default Camera IP</label>
+              <input type="text" id="camIp" value="192.168.1.150" placeholder="192.168.1.150">
+            </div>
+
+            <div class="form-group">
+              <label for="camPort">Stream Port</label>
+              <input type="number" id="camPort" value="81" min="1" max="65535">
+            </div>
+
+            <div class="form-group">
+              <label for="camPath">Stream Endpoint</label>
+              <input type="text" id="camPath" value="/stream">
+            </div>
+
+            <div class="form-group">
+              <label for="roverSpeed">Default Rover Speed (%)</label>
+              <input type="number" id="roverSpeed" value="70" min="10" max="100">
+            </div>
+
+            <div class="form-group toggle-group">
+              <label class="toggle-label" for="autoBrake">
+                <span>Auto-Brake on Key Release</span>
+                <span class="input-hint">Sends ROVER_STOP when WASD keys are lifted</span>
+              </label>
+              <input type="checkbox" id="autoBrake" checked>
+            </div>
+
+            <div class="form-group toggle-group">
+              <label class="toggle-label" for="soundFx">
+                <span>Telemetry SFX Audio</span>
+                <span class="input-hint">Synthetic drone/teleop audio beeps</span>
+              </label>
+              <input type="checkbox" id="soundFx" checked>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Action Bar -->
+    <footer class="settings-footer glass-panel">
+      <div class="footer-left">
+        <button type="button" id="btnResetAll" class="btn btn-danger">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+            <polyline points="1 4 1 10 7 10"/>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+          </svg>
+          Reset to Factory Defaults
+        </button>
+      </div>
+
+      <div class="footer-right">
+        <a href="index.html" class="btn btn-secondary">Cancel</a>
+        <button type="button" id="btnBottomSave" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Save & Return to Cockpit
+        </button>
+      </div>
+    </footer>
+
+  </div>
+
+  <script type="module" src="settings.js"></script>
+</body>
+</html>

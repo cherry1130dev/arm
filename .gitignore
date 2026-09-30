@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build / Arduino binaries
+*.bin
+*.elf
+*.hex
+
+# Logs
+*.log
